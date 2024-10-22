@@ -9,7 +9,7 @@ The Python code will process the vectors, calculate and output the required matr
 
 Example: > python symnmf.py 2 symnmf input_1.txt
 
-## sumnmf.c
+## symnmf.c
 This is a the C implementation for the symNMF algorithm.
 It recieves a goal from console and a .txt file into input.
 

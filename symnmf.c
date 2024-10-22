@@ -239,5 +239,4 @@ double** symnmf(double** W, double** H, int N, int vecdim, int k, int iter, doub
 /* TODO:
         - Implement data recieval from input
         - Implement matrix output
-        - Consider moving all functions to a seperate file, in favor of a more convenient API
 */
