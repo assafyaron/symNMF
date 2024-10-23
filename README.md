@@ -1,4 +1,4 @@
-# SymNMF_v1
+# SymNMF
 Implementation of a clustering algorithm based on symmetric non-negative matrix factorization in Python and C.
 
 ## symnmf.py
@@ -21,7 +21,7 @@ Example: > ./symnmf 2 sym < input_1.txt
 Python-C API. Defines the C extension for the Python code.
 
 ## analysis.py
-Compares SymNMF to [Kmeans](https://github.com/OzCabiri/K-means-clustering_v1).
+Compares SymNMF to [Kmeans](https://github.com/OzCabiri/K-means-clustering_v1](https://github.com/assafyaron/K-means-Cluster).
 Applies both methods to a given dataset and reports the silhouette score from sklearn.metrics.
 The score is calculated as the mean of the silhouette coefficient of each data point seperatly.
 A higher score indicates better defined clusters.
