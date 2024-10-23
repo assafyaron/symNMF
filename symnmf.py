@@ -50,9 +50,7 @@ def main():
                 print("An Error Has Occurred")
                 return
 
-        # Print the chosen vectors
-        print(','.join(str(x) for x in matrix_goal))
-        # print final centroids until 4 decimal points
+        # print matrix_goal until 4 decimal points
         for centroid in matrix_goal:
             print(','.join(format(x, ".4f") for x in centroid))
 
