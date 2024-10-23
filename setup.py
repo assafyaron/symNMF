@@ -1,6 +1,6 @@
 from setuptools import Extension, setup
 
-module = Extension('mysymnmfsp', sources=['symnmfmodule.c'])
+module = Extension('mysymnmfsp', sources=['symnmfmodule.c', 'symnmf.c'], include_dirs=['./'])
 
 setup(
     name='symnmf',
