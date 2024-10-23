@@ -4,21 +4,18 @@
 # include <math.h>
 # include "symnmf.h"
 
+static int N, vecdim;
+
 double** convert_matrix(PyObject* self, PyObject* args)
 {
-    int k, N, vecdim, iter;
-    double eps;
     PyObject* vec_arr_obj;
-    PyObject* rows_obj;
     double** vec_arr;
-    double** rows;
     
     /* This parses the Python arguments into:
         1. int (i) variables named k,N,vecdim,iter
         2. double (d) variable named eps
-        3. A pointer to a pointer to a double (O) variable named vec_arr
-        4. A pointer to a pointer to a double (O) variable named rows */
-    if(!PyArg_ParseTuple(args, "iiiidOO", &k, &N, &vecdim, &iter, &eps, &vec_arr_obj, &rows_obj))
+        3. A pointer to a pointer to a double (O) variable named vec_arr */
+    if(!PyArg_ParseTuple(args, "Oii", &vec_arr_obj, &N, &vecdim))
     {
         return NULL; /* In the CPython API, a NULL value is never valid for a
                         PyObject* so it is used to signal that an error has occurred. */
@@ -26,18 +23,15 @@ double** convert_matrix(PyObject* self, PyObject* args)
 
     // Allocate memory for C arrays and check if allocation failed
     vec_arr = malloc(N*sizeof(double*));
-    rows = malloc(k*sizeof(double*));
-    if (vec_arr == NULL || rows == NULL)
+    if (vec_arr == NULL)
     {
         PyErr_SetString(PyExc_MemoryError, "Memory allocation failed");
         free(vec_arr);
-        free(rows);
         return NULL;
     }
     
-    
     int i,j;
-    /* Allocate memory for each vector in vec_arr and rows */
+    /* Allocate memory for each vector in vec_arr */
     for (i=0;i<N;i++)
     {
         vec_arr[i] = malloc(vecdim*sizeof(double));
@@ -49,86 +43,36 @@ double** convert_matrix(PyObject* self, PyObject* args)
                 free(vec_arr[j]);
             }
             free(vec_arr);
-            free(rows);
-            return NULL;
-        }
-    }
-    for (i=0;i<k;i++)
-    {
-        rows[i] = malloc(vecdim*sizeof(double));
-        if (rows[i] == NULL)
-        {
-            PyErr_SetString(PyExc_MemoryError, "Memory allocation failed");
-            for (j=0;j<i;j++)
-            {
-                free(rows[j]);
-            }
-            free(rows);
-            for (j=0;j<N;j++)
-            {
-                free(vec_arr[j]);
-            }
-            free(vec_arr);
             return NULL;
         }
     }
 
     /* Convert python lists into C arrays */
-    PyObject* vec1;
-    PyObject* vec2;
+    PyObject* vec;
     for (i=0;i<N;i++)
     {
-        vec1 = PyList_GetItem(vec_arr_obj, i);
+        vec = PyList_GetItem(vec_arr_obj, i);
         for (j=0;j<vecdim;j++)
         {
-            vec_arr[i][j] = PyFloat_AsDouble(PyList_GetItem(vec1,j));
+            vec_arr[i][j] = PyFloat_AsDouble(PyList_GetItem(vec,j));
         }
     }
-    for (i=0;i<k;i++)
-    {
-        vec2 = PyList_GetItem(rows_obj, i);
-        for (j=0;j<vecdim;j++)
-        {
-            rows[i][j] = PyFloat_AsDouble(PyList_GetItem(vec2,j));
-        }
-    }
-}
-
-/* Converts N and vecdim to C integers. */
-int* convert_N_vecdim(PyObject* self, PyObject* args)
-{
-    int N, vecdim;
-    if(!PyArg_ParseTuple(args, "ii", &N, &vecdim))
-    {
-        return NULL; /* In the CPython API, a NULL value is never valid for a
-                        PyObject* so it is used to signal that an error has occurred. */
-    }
-    int* result = malloc(2*sizeof(int));
-    if (result == NULL)
-    {
-        PyErr_SetString(PyExc_MemoryError, "Memory allocation failed");
-        return NULL;
-    }
-    result[0] = N;
-    result[1] = vecdim;
-
-    return result;
+    return vec_arr;
 }
 
 static PyObject* symmodule(PyObject* self, PyObject* args)
 {
     int i,j;
     double** vectors_matrix = convert_matrix(self, args);
-    int* N_vecdim = convert_N_vecdim(self, args);
-    double** sym_matrix = sym(vectors_matrix, N_vecdim[0], N_vecdim[1]);
+    double** sym_matrix = sym(vectors_matrix, N, vecdim);
 
     /* Convert our C double** to a python list of lists */
-    PyObject* final_sym = PyList_New(N_vecdim[0]);
+    PyObject* final_sym = PyList_New(N);
     PyObject* final_row;
-    for (i=0;i<N_vecdim[0];i++)
+    for (i=0;i<N;i++)
     {
-        final_row = PyList_New(N_vecdim[0]);
-        for (j=0;j<N_vecdim[0];j++)
+        final_row = PyList_New(N);
+        for (j=0;j<N;j++)
         {
             PyList_SetItem(final_row, j, PyFloat_FromDouble(sym_matrix[i][j]));
         }
@@ -136,15 +80,13 @@ static PyObject* symmodule(PyObject* self, PyObject* args)
     }
 
     /* Free all allocated memory */
-    for (i=0;i<N_vecdim[0];i++)
+    for (i=0;i<N;i++)
     {
         free(vectors_matrix[i]);
     }
     free(vectors_matrix); 
 
-    free(N_vecdim);
-
-    for (i=0;i<N_vecdim[0];i++)
+    for (i=0;i<N;i++)
     {
         free(sym_matrix[i]);
     }
@@ -157,16 +99,15 @@ static PyObject* ddgmodule(PyObject* self, PyObject* args)
 {
     int i,j;
     double** vectors_matrix = convert_matrix(self, args);
-    int* N_vecdim = convert_N_vecdim(self, args);
-    double** ddg_matrix = ddg(vectors_matrix, N_vecdim[0], N_vecdim[1]);
+    double** ddg_matrix = ddg(vectors_matrix, N, vecdim);
 
     /* Convert our C double** to a python list of lists */
-    PyObject* final_ddg = PyList_New(N_vecdim[0]);
+    PyObject* final_ddg = PyList_New(N);
     PyObject* final_row;
-    for (i=0;i<N_vecdim[0];i++)
+    for (i=0;i<N;i++)
     {
-        final_row = PyList_New(N_vecdim[0]);
-        for (j=0;j<N_vecdim[0];j++)
+        final_row = PyList_New(N);
+        for (j=0;j<N;j++)
         {
             PyList_SetItem(final_row, j, PyFloat_FromDouble(ddg_matrix[i][j]));
         }
@@ -174,15 +115,13 @@ static PyObject* ddgmodule(PyObject* self, PyObject* args)
     }
 
     /* Free all allocated memory */
-    for (i=0;i<N_vecdim[0];i++)
+    for (i=0;i<N;i++)
     {
         free(vectors_matrix[i]);
     }
     free(vectors_matrix); 
 
-    free(N_vecdim);
-
-    for (i=0;i<N_vecdim[0];i++)
+    for (i=0;i<N;i++)
     {
         free(ddg_matrix[i]);
     }
@@ -195,16 +134,15 @@ static PyObject* normmodule(PyObject* self, PyObject* args)
 {
     int i,j;
     double** vectors_matrix = convert_matrix(self, args);
-    int* N_vecdim = convert_N_vecdim(self, args);
-    double** norm_matrix = norm(vectors_matrix, N_vecdim[0], N_vecdim[1]);
+    double** norm_matrix = norm(vectors_matrix, N, vecdim);
 
     /* Convert our C double** to a python list of lists */
-    PyObject* final_norm = PyList_New(N_vecdim[0]);
+    PyObject* final_norm = PyList_New(N);
     PyObject* final_row;
-    for (i=0;i<N_vecdim[0];i++)
+    for (i=0;i<N;i++)
     {
-        final_row = PyList_New(N_vecdim[0]);
-        for (j=0;j<N_vecdim[0];j++)
+        final_row = PyList_New(N);
+        for (j=0;j<N;j++)
         {
             PyList_SetItem(final_row, j, PyFloat_FromDouble(norm_matrix[i][j]));
         }
@@ -212,15 +150,13 @@ static PyObject* normmodule(PyObject* self, PyObject* args)
     }
 
     /* Free all allocated memory */
-    for (i=0;i<N_vecdim[0];i++)
+    for (i=0;i<N;i++)
     {
         free(vectors_matrix[i]);
     }
     free(vectors_matrix); 
 
-    free(N_vecdim);
-
-    for (i=0;i<N_vecdim[0];i++)
+    for (i=0;i<N;i++)
     {
         free(norm_matrix[i]);
     }
