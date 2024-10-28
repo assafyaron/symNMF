@@ -122,7 +122,7 @@ Example:
 python analysis.py 5 tests/input_1.txt
 ```
 
-_For more examples, please refer to the [Documentation](https://github.com/OzCabiri/SymNMF_v1/blob/main/tests/test_readme.txt)_
+_For more examples, please refer to the [Documentation](https://github.com/assafyaron/symNMF/blob/main/tests/test_readme.txt)_
 
 <p align="right">(<a href="#readme-top">back to top</a>)</p>
 
